@@ -4,9 +4,11 @@ import { TarjetaPedido } from "./TarjetaPedido"
 
 interface Props {
   pedidos: Pedido[]
+  alMarcarListo: (id: number) => void
+  alCancelar: (id: number) => void
 }
 
-export function Tablero({ pedidos }: Props) {
+export function Tablero({ pedidos, alMarcarListo, alCancelar }: Props) {
   // Cada 60 segundos fuerza un redibujado para actualizar los "N min"
   const [, setLatido] = useState(0)
   useEffect(() => {
@@ -37,7 +39,12 @@ export function Tablero({ pedidos }: Props) {
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {pendientes.map((pedido) => (
-            <TarjetaPedido key={pedido.id} pedido={pedido} />
+            <TarjetaPedido
+              key={pedido.id}
+              pedido={pedido}
+              alMarcarListo={alMarcarListo}
+              alCancelar={alCancelar}
+            />
           ))}
         </div>
       )}

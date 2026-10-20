@@ -51,6 +51,7 @@ export function usePedidos() {
           const pedido = payload.new as Pedido
           setPedidos((anteriores) => {
             const sinEste = anteriores.filter((p) => p.id !== pedido.id)
+            // Si ya no está pendiente (listo o cancelado), sale de la pantalla
             if (pedido.estado !== "pendiente") return sinEste
             return ordenarPorLlegada([...sinEste, pedido])
           })
@@ -70,5 +71,30 @@ export function usePedidos() {
     }
   }, [])
 
-  return { pedidos, cargando, error, conectado }
+  // Cambia el estado de un pedido (sirve para "listo" y para "cancelado")
+  async function cambiarEstado(id: number, nuevoEstado: "listo" | "cancelado") {
+    // Primero lo sacamos de la pantalla para que se sienta instantáneo
+    setPedidos((anteriores) => anteriores.filter((p) => p.id !== id))
+
+    const { error } = await supabase
+      .from("pedidos")
+      .update({ estado: nuevoEstado, completed_at: new Date().toISOString() })
+      .eq("id", id)
+
+    if (error) {
+      // Si falló, volvemos a traer la lista real y avisamos
+      await cargarPendientes()
+      setError("No se pudo actualizar el pedido. Probá de nuevo.")
+    }
+  }
+
+  function marcarListo(id: number) {
+    return cambiarEstado(id, "listo")
+  }
+
+  function cancelarPedido(id: number) {
+    return cambiarEstado(id, "cancelado")
+  }
+
+  return { pedidos, cargando, error, conectado, marcarListo, cancelarPedido }
 }

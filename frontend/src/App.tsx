@@ -2,7 +2,8 @@ import { Tablero } from "./components/Tablero"
 import { usePedidos } from "./lib/usePedidos"
 
 function App() {
-  const { pedidos, cargando, error, conectado } = usePedidos()
+  const { pedidos, cargando, error, conectado, marcarListo, cancelarPedido } =
+    usePedidos()
 
   return (
     <div className="min-h-screen bg-neutral-900 p-4 sm:p-8">
@@ -24,7 +25,11 @@ function App() {
           Cargando pedidos...
         </p>
       ) : (
-        <Tablero pedidos={pedidos} />
+        <Tablero
+          pedidos={pedidos}
+          alMarcarListo={marcarListo}
+          alCancelar={cancelarPedido}
+        />
       )}
     </div>
   )
