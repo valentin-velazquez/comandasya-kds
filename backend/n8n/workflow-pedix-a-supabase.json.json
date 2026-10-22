@@ -1,0 +1,220 @@
+{
+  "name": "Pedix a Supabase (ComandasYa)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "REEMPLAZAR-POR-TU-ID-DE-WEBHOOK",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "4a6f7f0d-e006-4ee0-bd9d-ee9a897c8d54",
+      "name": "Webhook"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $('Webhook').first().json.body;\nconst decoded = Buffer.from(body.message.data, 'base64').toString('utf-8');\nconst jsonData = JSON.parse(decoded);\nconst order = jsonData.afterData;\n\n// Pedix solo manda el código de cada grupo de opciones, no su nombre.\n// Acá decimos cómo se llama cada uno y de qué tipo es:\n//   agregar = se suma algo   sacar = se saca algo\nconst GRUPOS = {\n  'b83yR1ow51aXqvlUfVxR': { titulo: 'EXTRAS EN HAMBURGUESA', tipo: 'agregar' },\n  'vNzEFea7bLYQ8yZrByNn': { titulo: 'EXTRAS EN PAPAS FRITAS', tipo: 'agregar' }, // varias hamburguesas\n  'v2XoUUllSAs2Z3a7LgBB': { titulo: 'EXTRAS EN PAPAS FRITAS', tipo: 'agregar' }, // TASTYVAL\n  '7fV3BBkdCxhKl0WG1lXz': { titulo: 'SIN', tipo: 'sacar' },                      // DOBLE CUARTO\n  'fc7rcxt5QnIFvmQqIv2o': { titulo: 'SIN', tipo: 'sacar' },                      // TASTYVAL\n  'f5FgqRaHXkQ1bmQYzpCW': { titulo: 'SIN', tipo: 'sacar' },                      // DOBLE y TRIPLE\n  'hEdLabu4sOg0TVjvDWbg': { titulo: 'SIN', tipo: 'sacar' },                      // SUPER P\n};\n\n// Marca que usamos en el texto para que la pantalla sepa de qué color dibujarlo\nconst MARCAS = { agregar: '+', sacar: '-', otro: '*' };\n\n// Línea de título de un grupo, por ejemplo \"[-] SIN\"\nfunction encabezadoDeGrupo(grupoId, opciones) {\n  const conocido = GRUPOS[grupoId];\n  if (conocido) return `[${MARCAS[conocido.tipo]}] ${conocido.titulo}`;\n\n  // Grupo que todavía no conocemos: si cuesta plata es un extra,\n  // si no, lo mostramos neutro para no inventar un \"SIN\".\n  // Se muestra el código para poder agregarlo a la tabla de arriba.\n  const cuesta = opciones.some((o) => o.price > 0);\n  const tipo = cuesta ? 'agregar' : 'otro';\n  const titulo = cuesta ? 'EXTRAS' : 'OPCIONES';\n  return `[${MARCAS[tipo]}] ${titulo} (grupo nuevo: ${grupoId})`;\n}\n\n// Un bloque por producto: el producto, sus grupos con lo elegido y su nota\nconst productos = order.cartItems.map((item) => {\n  const lineas = [`${item.qty}x ${item.productName}`];\n\n  for (const seleccion of item.selectedOptions || []) {\n    // Pedix manda cada grupo así: { option: { id }, items: [ ... ] }\n    const grupoId = seleccion.option ? seleccion.option.id : seleccion.id;\n    const opciones = seleccion.items || [];\n    if (opciones.length === 0) continue; // grupo sin nada elegido: no se muestra\n\n    lineas.push(encabezadoDeGrupo(grupoId, opciones));\n    for (const opcion of opciones) {\n      const cantidad = opcion.quantity > 1 ? `${opcion.quantity}x ` : '';\n      lineas.push(`- ${cantidad}${opcion.name}`);\n    }\n  }\n\n  if (item.observations) lineas.push(`! ${item.observations}`);\n  return lineas.join('\\n');\n}).join('\\n');\n\n// Pedix copia la nota de cada producto dentro de la observación general\n// (\"PILETA DE CHEDDAR: ...\"). La sacamos para que no se repita.\nlet general = order.observations || '';\nfor (const item of order.cartItems) {\n  if (item.observations) {\n    general = general.split(`${item.productName}: ${item.observations}`).join('');\n  }\n}\ngeneral = general\n  .replace(/(\\s*[\\n;,]\\s*){2,}/g, '\\n')\n  .replace(/^[\\s,;|\\-]+|[\\s,;|\\-]+$/g, '');\n\nreturn [{\n  json: {\n    pedix_id: String(order.id),\n    cliente_nombre: order.personalInformation?.name || null,\n    tipo_entrega: order.isDelivery ? 'envio' : 'retiro',\n    productos: productos,\n    observaciones: general || null,\n  },\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        0
+      ],
+      "id": "7117dd81-c585-4c8c-ba0f-5d133855a831",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "tableId": "pedidos",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "pedix_id",
+              "fieldValue": "={{ $json.pedix_id }}"
+            },
+            {
+              "fieldId": "productos",
+              "fieldValue": "={{ $json.productos }}"
+            },
+            {
+              "fieldId": "observaciones",
+              "fieldValue": "={{ $json.observaciones }}"
+            },
+            {
+              "fieldId": "estado",
+              "fieldValue": "pendiente"
+            },
+            {
+              "fieldId": "cliente_nombre",
+              "fieldValue": "={{ $json.cliente_nombre }}"
+            },
+            {
+              "fieldId": "tipo_entrega",
+              "fieldValue": "={{ $json.tipo_entrega }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        896,
+        0
+      ],
+      "id": "f9fd7aa1-21a2-4a7b-9fb8-0537d92a629c",
+      "name": "Create a row",
+      "executeOnce": false,
+      "credentials": {
+        "supabaseApi": {
+          "id": "oMhx1koNHzn1FZbL",
+          "name": "Supabase account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "url": "https://oauth2.googleapis.com/tokeninfo",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "id_token",
+              "value": "={{ $json.headers.authorization.replace('Bearer ', '') }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        224,
+        0
+      ],
+      "id": "f0d5187a-6645-452a-b452-f1189ce96472",
+      "name": "HTTP Request",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "2c170c8f-dc70-4e29-ae11-1981a0c5ebba",
+              "leftValue": "={{ $json.aud }}",
+              "rightValue": "lodepriburgers",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            },
+            {
+              "id": "0cee4e2e-38cd-4c13-a241-8fe5d7e7039e",
+              "leftValue": "={{ $json.email }}",
+              "rightValue": "comprarporwhatsapp-19eb8@appspot.gserviceaccount.com",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            },
+            {
+              "id": "5b7addd8-99e3-4ee9-a4d3-353e2ecc7e30",
+              "leftValue": "={{ $json.email_verified }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        448,
+        0
+      ],
+      "id": "fe51add2-bfa3-4b05-90dd-120c748b0c4a",
+      "name": "If"
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Create a row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "nodeGroups": [],
+  "tags": []
+}

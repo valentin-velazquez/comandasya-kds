@@ -1,14 +1,14 @@
 import { useEffect, useState } from "react"
+import { momentoDeLlegada } from "../lib/pedidos"
 import type { Pedido } from "../lib/pedidos"
 import { TarjetaPedido } from "./TarjetaPedido"
 
 interface Props {
   pedidos: Pedido[]
   alMarcarListo: (id: number) => void
-  alCancelar: (id: number) => void
 }
 
-export function Tablero({ pedidos, alMarcarListo, alCancelar }: Props) {
+export function Tablero({ pedidos, alMarcarListo }: Props) {
   // Cada 60 segundos fuerza un redibujado para actualizar los "N min"
   const [, setLatido] = useState(0)
   useEffect(() => {
@@ -20,7 +20,8 @@ export function Tablero({ pedidos, alMarcarListo, alCancelar }: Props) {
     .filter((p) => p.estado === "pendiente")
     .sort(
       (a, b) =>
-        new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+        new Date(momentoDeLlegada(a)).getTime() -
+        new Date(momentoDeLlegada(b)).getTime()
     )
 
   return (
@@ -43,7 +44,6 @@ export function Tablero({ pedidos, alMarcarListo, alCancelar }: Props) {
               key={pedido.id}
               pedido={pedido}
               alMarcarListo={alMarcarListo}
-              alCancelar={alCancelar}
             />
           ))}
         </div>

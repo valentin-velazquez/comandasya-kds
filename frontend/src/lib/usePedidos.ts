@@ -1,10 +1,14 @@
 import { useEffect, useState } from "react"
 import { supabase } from "./supabase"
+import { momentoDeLlegada } from "./pedidos"
 import type { Pedido } from "./pedidos"
 
+// Del que espera hace más tiempo al que espera hace menos
 function ordenarPorLlegada(lista: Pedido[]): Pedido[] {
   return [...lista].sort(
-    (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+    (a, b) =>
+      new Date(momentoDeLlegada(a)).getTime() -
+      new Date(momentoDeLlegada(b)).getTime()
   )
 }
 
@@ -14,18 +18,17 @@ export function usePedidos() {
   const [error, setError] = useState<string | null>(null)
   const [conectado, setConectado] = useState(false)
 
-  // Trae de la base los pedidos pendientes, del más viejo al más nuevo
+  // Trae de la base los pedidos pendientes
   async function cargarPendientes() {
     const { data, error } = await supabase
       .from("pedidos")
       .select("*")
       .eq("estado", "pendiente")
-      .order("created_at", { ascending: true })
 
     if (error) {
       setError("No se pudieron cargar los pedidos")
     } else {
-      setPedidos(data as Pedido[])
+      setPedidos(ordenarPorLlegada(data as Pedido[]))
       setError(null)
     }
     setCargando(false)
@@ -71,14 +74,14 @@ export function usePedidos() {
     }
   }, [])
 
-  // Cambia el estado de un pedido (sirve para "listo" y para "cancelado")
-  async function cambiarEstado(id: number, nuevoEstado: "listo" | "cancelado") {
+  // Cocina solo puede marcar un pedido como completado
+  async function marcarListo(id: number) {
     // Primero lo sacamos de la pantalla para que se sienta instantáneo
     setPedidos((anteriores) => anteriores.filter((p) => p.id !== id))
 
     const { error } = await supabase
       .from("pedidos")
-      .update({ estado: nuevoEstado, completed_at: new Date().toISOString() })
+      .update({ estado: "listo" })
       .eq("id", id)
 
     if (error) {
@@ -88,13 +91,5 @@ export function usePedidos() {
     }
   }
 
-  function marcarListo(id: number) {
-    return cambiarEstado(id, "listo")
-  }
-
-  function cancelarPedido(id: number) {
-    return cambiarEstado(id, "cancelado")
-  }
-
-  return { pedidos, cargando, error, conectado, marcarListo, cancelarPedido }
+  return { pedidos, cargando, error, conectado, marcarListo }
 }

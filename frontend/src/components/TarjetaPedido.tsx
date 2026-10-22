@@ -1,27 +1,33 @@
-import { useState } from "react"
-import { formatearHora, minutosDesde } from "../lib/pedidos"
+import { formatearHora, minutosDesde, momentoDeLlegada } from "../lib/pedidos"
 import type { Pedido } from "../lib/pedidos"
+import { EtiquetaEntrega } from "./EtiquetaEntrega"
+import { ListaProductos } from "./ListaProductos"
 
 interface Props {
   pedido: Pedido
   alMarcarListo: (id: number) => void
-  alCancelar: (id: number) => void
 }
 
-export function TarjetaPedido({ pedido, alMarcarListo, alCancelar }: Props) {
-  // true = el usuario apretó "Cancelar" y estamos esperando que confirme
-  const [confirmando, setConfirmando] = useState(false)
-
-  const minutos = minutosDesde(pedido.created_at)
+export function TarjetaPedido({ pedido, alMarcarListo }: Props) {
+  const llegada = momentoDeLlegada(pedido)
+  const minutos = minutosDesde(llegada)
   const demorado = minutos > 15
-  const lineas = pedido.productos.split("\n")
+
+  // Un pedido reenviado se ve distinto: borde y fondo celestes
+  const colores = pedido.reenviado
+    ? "border-sky-400 bg-sky-950"
+    : demorado
+      ? "border-orange-500 bg-neutral-800"
+      : "border-neutral-700 bg-neutral-800"
 
   return (
-    <article
-      className={`rounded-2xl bg-neutral-800 p-5 text-white border-2 ${
-        demorado ? "border-orange-500" : "border-neutral-700"
-      }`}
-    >
+    <article className={`rounded-2xl border-2 p-5 text-white ${colores}`}>
+      {pedido.reenviado && (
+        <div className="mb-4 rounded-lg bg-sky-400 py-1 text-center text-lg font-extrabold tracking-widest text-black">
+          REENVIADO
+        </div>
+      )}
+
       <header className="flex items-center justify-between">
         <span className="rounded-lg bg-neutral-700 px-3 py-1 text-lg font-bold">
           #{pedido.pedix_id}
@@ -35,15 +41,24 @@ export function TarjetaPedido({ pedido, alMarcarListo, alCancelar }: Props) {
         </span>
       </header>
 
-      <p className="mt-2 text-sm text-neutral-400">
-        Llegó a las {formatearHora(pedido.created_at)}
+      {(pedido.cliente_nombre || pedido.tipo_entrega) && (
+        <div className="mt-3 flex flex-wrap items-center gap-3">
+          {pedido.cliente_nombre && (
+            <span className="text-xl font-semibold">{pedido.cliente_nombre}</span>
+          )}
+          <EtiquetaEntrega tipo={pedido.tipo_entrega} />
+        </div>
+      )}
+
+      <p className="mt-2 text-sm text-neutral-300">
+        {pedido.reenviado
+          ? `Reenviado a las ${formatearHora(llegada)} (pedido original de las ${formatearHora(pedido.created_at)})`
+          : `Llegó a las ${formatearHora(pedido.created_at)}`}
       </p>
 
-      <ul className="mt-4 space-y-1 text-lg">
-        {lineas.map((linea, i) => (
-          <li key={i}>{linea}</li>
-        ))}
-      </ul>
+      <div className="mt-4">
+        <ListaProductos productos={pedido.productos} />
+      </div>
 
       {pedido.observaciones && (
         <div className="mt-4 rounded-lg bg-yellow-400 p-3 text-black">
@@ -51,42 +66,18 @@ export function TarjetaPedido({ pedido, alMarcarListo, alCancelar }: Props) {
         </div>
       )}
 
-      {confirmando ? (
-        <div className="mt-5">
-          <p className="mb-2 text-center font-semibold">
-            ¿Cancelar el pedido #{pedido.pedix_id}?
-          </p>
-          <div className="grid grid-cols-2 gap-3">
-            <button
-              onClick={() => alCancelar(pedido.id)}
-              className="rounded-xl bg-red-600 py-3 text-lg font-bold text-white"
-            >
-              Sí, cancelar
-            </button>
-            <button
-              onClick={() => setConfirmando(false)}
-              className="rounded-xl bg-neutral-600 py-3 text-lg font-bold text-white"
-            >
-              No
-            </button>
-          </div>
-        </div>
-      ) : (
-        <div className="mt-5 grid grid-cols-3 gap-3">
-          <button
-            onClick={() => alMarcarListo(pedido.id)}
-            className="col-span-2 rounded-xl bg-white py-3 text-lg font-bold text-black"
-          >
-            Marcar como listo
-          </button>
-          <button
-            onClick={() => setConfirmando(true)}
-            className="rounded-xl border-2 border-red-500 py-3 text-lg font-bold text-red-400"
-          >
-            Cancelar
-          </button>
+      {pedido.reenviado && pedido.nota_reenvio && (
+        <div className="mt-4 rounded-lg bg-sky-200 p-3 text-lg text-black">
+          <strong>NOTA DE MOSTRADOR:</strong> {pedido.nota_reenvio}
         </div>
       )}
+
+      <button
+        onClick={() => alMarcarListo(pedido.id)}
+        className="mt-5 w-full rounded-xl bg-white py-3 text-lg font-bold text-black"
+      >
+        Marcar como listo
+      </button>
     </article>
   )
 }

@@ -1,5 +1,6 @@
 import { Login } from "./components/Login"
 import { PantallaCocina } from "./components/PantallaCocina"
+import { PantallaMostrador } from "./components/PantallaMostrador"
 import { useSesion } from "./lib/useSesion"
 
 function Mensaje({ texto, alSalir }: { texto: string; alSalir?: () => void }) {
@@ -30,12 +31,7 @@ function App() {
   if (rol === "cocina") return <PantallaCocina alCerrarSesion={cerrarSesion} />
 
   if (rol === "mostrador") {
-    return (
-      <Mensaje
-        texto="Pantalla de mostrador (en construcción)"
-        alSalir={cerrarSesion}
-      />
-    )
+    return <PantallaMostrador alCerrarSesion={cerrarSesion} />
   }
 
   return (
