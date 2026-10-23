@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react"
+import { Encabezado } from "./Encabezado"
 import { FilaPedido } from "./FilaPedido"
 import { hoyLocal } from "../lib/pedidos"
 import { useUltimosPedidos } from "../lib/useUltimosPedidos"
@@ -27,77 +28,71 @@ export function PantallaMostrador({ alCerrarSesion }: Props) {
   }, [])
 
   return (
-    <div className="min-h-screen bg-neutral-900 p-4 sm:p-8">
-      <div className="mb-4 flex items-center justify-end gap-4 text-sm font-semibold text-neutral-400">
-        <span className="flex items-center gap-2">
-          <span
-            className={`h-3 w-3 rounded-full ${conectado ? "bg-green-500" : "bg-red-500"}`}
-          />
-          {conectado ? "En vivo" : "Sin conexión"}
-        </span>
-        <button
-          onClick={alCerrarSesion}
-          className="rounded-lg border border-neutral-600 px-3 py-1 text-neutral-300"
-        >
-          Salir
-        </button>
-      </div>
+    <div className="min-h-screen bg-neutral-100 text-neutral-900">
+      <Encabezado
+        seccion="Mostrador"
+        conectado={conectado}
+        alCerrarSesion={alCerrarSesion}
+        tema="claro"
+      />
 
-      <header className="mb-6 flex flex-wrap items-center justify-between gap-4">
-        <h1 className="text-3xl font-bold text-white">Últimos pedidos</h1>
+      <main className="p-4 sm:p-8">
+        <header className="mb-6 flex flex-wrap items-center justify-between gap-4">
+          <h1 className="font-titulo text-4xl font-bold">Últimos pedidos</h1>
 
-        <div className="flex items-center gap-3 text-white">
-          <label htmlFor="dia" className="text-sm font-semibold text-neutral-400">
-            Día
-          </label>
-          <input
-            id="dia"
-            type="date"
-            value={dia}
-            max={hoyLocal()}
-            onChange={(e) => {
-              if (e.target.value) setDia(e.target.value)
-            }}
-            className="rounded-lg bg-neutral-700 p-2 text-white [color-scheme:dark]"
-          />
-          <button
-            onClick={() => setDia(hoyLocal())}
-            className="rounded-lg border border-neutral-600 px-3 py-2 text-sm font-semibold"
-          >
-            Hoy
-          </button>
-          <span className="rounded-full bg-neutral-700 px-4 py-1 text-sm">
-            {pedidos.length} pedidos
-          </span>
-        </div>
-      </header>
-
-      {error && (
-        <div className="mb-6 rounded-xl border-2 border-orange-500 bg-orange-500/10 p-4 text-base font-bold text-white">
-          {error}
-        </div>
-      )}
-
-      {cargando ? (
-        <p className="py-24 text-center text-xl font-semibold text-neutral-400">
-          Cargando pedidos...
-        </p>
-      ) : pedidos.length === 0 ? (
-        <p className="py-24 text-center text-xl text-neutral-400">
-          No hay pedidos ese día
-        </p>
-      ) : (
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-          {pedidos.map((pedido) => (
-            <FilaPedido
-              key={pedido.id}
-              pedido={pedido}
-              alCancelar={cancelarPedido}
-              alRestaurar={restaurarPedido}
+          <div className="flex flex-wrap items-center gap-3">
+            <label htmlFor="dia" className="text-sm font-bold text-neutral-500">
+              Día
+            </label>
+            <input
+              id="dia"
+              type="date"
+              value={dia}
+              max={hoyLocal()}
+              onChange={(e) => {
+                if (e.target.value) setDia(e.target.value)
+              }}
+              className="rounded-lg border border-neutral-300 bg-white p-2 text-neutral-900"
             />
-          ))}
-        </div>
-      )}
+            <button
+              onClick={() => setDia(hoyLocal())}
+              className="rounded-lg bg-celeste px-4 py-2 font-titulo text-lg font-bold text-black"
+            >
+              Hoy
+            </button>
+            <span className="rounded-full bg-celeste-claro px-4 py-1 font-titulo text-lg font-bold text-celeste-oscuro">
+              {pedidos.length} pedidos
+            </span>
+          </div>
+        </header>
+
+        {error && (
+          <div className="mb-6 rounded-xl border-2 border-orange-500 bg-orange-100 p-4 text-base font-bold text-black">
+            {error}
+          </div>
+        )}
+
+        {cargando ? (
+          <p className="py-24 text-center text-xl font-semibold text-neutral-500">
+            Cargando pedidos...
+          </p>
+        ) : pedidos.length === 0 ? (
+          <p className="py-24 text-center text-xl text-neutral-500">
+            No hay pedidos ese día
+          </p>
+        ) : (
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+            {pedidos.map((pedido) => (
+              <FilaPedido
+                key={pedido.id}
+                pedido={pedido}
+                alCancelar={cancelarPedido}
+                alRestaurar={restaurarPedido}
+              />
+            ))}
+          </div>
+        )}
+      </main>
     </div>
   )
 }

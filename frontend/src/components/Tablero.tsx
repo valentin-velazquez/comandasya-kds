@@ -27,8 +27,10 @@ export function Tablero({ pedidos, alMarcarListo }: Props) {
   return (
     <section>
       <header className="mb-6 flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-white">Pedidos en cocina</h1>
-        <span className="rounded-full bg-neutral-700 px-4 py-1 text-white">
+        <h1 className="font-titulo text-4xl font-bold text-white">
+          Pedidos en cocina
+        </h1>
+        <span className="rounded-full bg-celeste px-4 py-1 font-titulo text-xl font-bold text-black">
           {pendientes.length} pendientes
         </span>
       </header>

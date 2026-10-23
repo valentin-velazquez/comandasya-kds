@@ -13,9 +13,9 @@ export function TarjetaPedido({ pedido, alMarcarListo }: Props) {
   const minutos = minutosDesde(llegada)
   const demorado = minutos > 15
 
-  // Un pedido reenviado se ve distinto: borde y fondo celestes
+  // Un pedido reenviado se ve distinto: borde y fondo violetas
   const colores = pedido.reenviado
-    ? "border-sky-400 bg-sky-950"
+    ? "border-violet-400 bg-violet-950"
     : demorado
       ? "border-orange-500 bg-neutral-800"
       : "border-neutral-700 bg-neutral-800"
@@ -23,17 +23,17 @@ export function TarjetaPedido({ pedido, alMarcarListo }: Props) {
   return (
     <article className={`rounded-2xl border-2 p-5 text-white ${colores}`}>
       {pedido.reenviado && (
-        <div className="mb-4 rounded-lg bg-sky-400 py-1 text-center text-lg font-extrabold tracking-widest text-black">
+        <div className="mb-4 rounded-lg bg-violet-400 py-1 text-center font-titulo text-xl font-extrabold tracking-widest text-black">
           REENVIADO
         </div>
       )}
 
       <header className="flex items-center justify-between">
-        <span className="rounded-lg bg-neutral-700 px-3 py-1 text-lg font-bold">
+        <span className="rounded-lg bg-neutral-700 px-3 py-1 font-titulo text-2xl font-bold">
           #{pedido.pedix_id}
         </span>
         <span
-          className={`rounded-full px-3 py-1 text-sm font-semibold ${
+          className={`rounded-full px-3 py-1 text-sm font-bold ${
             demorado ? "bg-orange-500 text-black" : "bg-neutral-700"
           }`}
         >
@@ -44,7 +44,9 @@ export function TarjetaPedido({ pedido, alMarcarListo }: Props) {
       {(pedido.cliente_nombre || pedido.tipo_entrega) && (
         <div className="mt-3 flex flex-wrap items-center gap-3">
           {pedido.cliente_nombre && (
-            <span className="text-xl font-semibold">{pedido.cliente_nombre}</span>
+            <span className="font-titulo text-2xl font-semibold">
+              {pedido.cliente_nombre}
+            </span>
           )}
           <EtiquetaEntrega tipo={pedido.tipo_entrega} />
         </div>
@@ -67,14 +69,14 @@ export function TarjetaPedido({ pedido, alMarcarListo }: Props) {
       )}
 
       {pedido.reenviado && pedido.nota_reenvio && (
-        <div className="mt-4 rounded-lg bg-sky-200 p-3 text-lg text-black">
+        <div className="mt-4 rounded-lg bg-violet-200 p-3 text-lg text-black">
           <strong>NOTA DE MOSTRADOR:</strong> {pedido.nota_reenvio}
         </div>
       )}
 
       <button
         onClick={() => alMarcarListo(pedido.id)}
-        className="mt-5 w-full rounded-xl bg-white py-3 text-lg font-bold text-black"
+        className="mt-5 w-full rounded-xl bg-celeste py-3 font-titulo text-xl font-bold text-black"
       >
         Marcar como listo
       </button>

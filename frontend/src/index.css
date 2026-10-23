@@ -1,1 +1,13 @@
+@import url("https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Nunito:wght@400;600;700;800&display=swap");
 @import "tailwindcss";
+
+@theme {
+  /* Colores de Pri-Burgers */
+  --color-celeste: #03a9f4;
+  --color-celeste-oscuro: #0288d1;
+  --color-celeste-claro: #e1f5fe;
+
+  /* Letras: títulos redondeados y texto fácil de leer */
+  --font-titulo: "Baloo 2", system-ui, sans-serif;
+  --font-sans: "Nunito", system-ui, sans-serif;
+}
